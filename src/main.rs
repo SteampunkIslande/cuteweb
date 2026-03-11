@@ -10,7 +10,7 @@ mod modules;
 use std::env;
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
     static PROJECT_DIR: Dir = include_dir!("static");
 
     let static_routes: Vec<Route> = match env::var("STATIC_DIR").ok() {
@@ -18,8 +18,13 @@ fn rocket() -> _ {
         None => StaticFiles::from(&PROJECT_DIR).into(),
     };
 
+    let pool = db::init_db()
+        .await
+        .expect("Impossible d'initialiser la base de données");
+
     rocket::build()
         .mount("/cuteweb", routes![frontend::get_project])
         .mount("/cuteweb/static", static_routes)
         .mount("/cuteweb/api", routes![backend::login_post])
+        .manage(pool)
 }
