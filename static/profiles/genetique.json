@@ -22,18 +22,32 @@
             "required_vars": [
                 {
                     "name": "fields",
-                    "type": "array",
+                    "type": "string_list",
                     "default": null
                 },
                 {
                     "name": "runs",
-                    "type": "array",
+                    "type": "string_list",
                     "default": null
                 }
             ],
             "queries": [
                 {
-                    "default": "SELECT {{ fields }} FROM (  ) WHERE {{ filters }} LIMIT {{ limit }} OFFSET {{ offset }}"
+                    "default": "SELECT {{ fields }} FROM ( SELECT * FROM read_parquet('{{ datalake_root }}/{{ runs }}') ) WHERE {{ filters }} LIMIT {{ limit }} OFFSET {{ offset }}"
+                }
+            ]
+        },
+        "variant_info": {
+            "required_vars": [
+                {
+                    "name": "current_variant",
+                    "type": "integer",
+                    "default": null
+                }
+            ],
+            "queries": [
+                {
+                    "default": "SELECT variant_hash,sample_name,genotype FROM read_parquet('{{ datalake_root }}/partitions/part-{{ variant_hash % 256 }}.parquet') WHERE variant_hash = {{ variant_hash }}"
                 }
             ]
         }
