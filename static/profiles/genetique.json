@@ -1,0 +1,41 @@
+{
+    "modules": [
+        "main_table",
+        "variant_info",
+        "fields",
+        "filters"
+    ],
+    "required_vars": [
+        {
+            "name": "samples",
+            "type": "array",
+            "default": null
+        },
+        {
+            "name": "runs",
+            "type": "array",
+            "default": null
+        }
+    ],
+    "module_definitions": {
+        "main_table": {
+            "required_vars": [
+                {
+                    "name": "fields",
+                    "type": "array",
+                    "default": null
+                },
+                {
+                    "name": "runs",
+                    "type": "array",
+                    "default": null
+                }
+            ],
+            "queries": [
+                {
+                    "default": "SELECT {{ fields }} FROM (  ) WHERE {{ filters }} LIMIT {{ limit }} OFFSET {{ offset }}"
+                }
+            ]
+        }
+    }
+}
