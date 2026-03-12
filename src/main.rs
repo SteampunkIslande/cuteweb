@@ -1,3 +1,4 @@
+use minijinja::Environment;
 use rocket::{Route, fs::FileServer, launch, routes};
 use rocket_include_dir::{Dir, StaticFiles, include_dir};
 
@@ -22,9 +23,38 @@ async fn rocket() -> _ {
         .await
         .expect("Impossible d'initialiser la base de données");
 
+    /// Répertoire statique embarqué dans le binaire (templates uniquement).
+    static TEMPLATES_DIR: Dir = include_dir!("static/templates");
+
+    let mut environment: Environment = Environment::new();
+    environment.set_loader(|name| {
+        if let Some(file) = TEMPLATES_DIR.get_file(name) {
+            if let Some(content) = file.contents_utf8() {
+                eprintln!("Invoked with {}", name);
+                Ok(Some(content.to_string()))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    });
+
     rocket::build()
+        // Pages HTML
         .mount("/cuteweb", routes![frontend::get_project])
+        // Fichiers statiques
         .mount("/cuteweb/static", static_routes)
-        .mount("/cuteweb/api", routes![backend::login_post])
+        // API : authentification
+        .mount(
+            "/cuteweb/api",
+            routes![backend::login_post, backend::setvar_post,],
+        )
+        // API : récupération des données des modules
+        .mount(
+            "/cuteweb/api/retrieve",
+            routes![modules::main_table_get, modules::fields_get,],
+        )
         .manage(pool)
+        .manage(environment)
 }

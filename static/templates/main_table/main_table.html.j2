@@ -1,0 +1,97 @@
+{#
+main_table.html.j2
+------------------
+Contexte Jinja attendu:
+- project_id : int
+- columns : liste de noms de colonnes (optionnel, rendu initialement vide)
+- rows : liste de dicts {col -> valeur} (optionnel, rendu initialement vide)
+#}
+
+<section id="main-table-section">
+
+    {# Barre d'état au-dessus de la table #}
+    <div class="main-table-toolbar">
+        <span id="main-table-status">Chargement…</span>
+        <button onclick="update_main_table()" title="Rafraîchir">⟳</button>
+    </div>
+
+    {# Conteneur de la table ; sera remplacé par JS après chaque fetch #}
+    <div id="main-table-container" class="table-scroll">
+        <table id="main-table">
+            <thead id="main-table-head">
+                <tr>
+                    {% for col in columns | default([]) %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="main-table-body">
+                {% for row in rows | default([]) %}
+                <tr>
+                    {% for col in columns | default([]) %}
+                    <td>{{ row[col] | default("") }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</section>
+
+<script>
+    /**
+     * update_main_table()
+     *
+     * Appelée par les autres modules quand une variable d'état a changé
+     * (ex: l'utilisateur a coché/décoché un champ dans le widget fields).
+     * Récupère les données fraîches depuis le backend et met à jour la table
+     * sans recharger toute la page.
+     */
+    async function update_main_table() {
+        const statusEl = document.getElementById('main-table-status');
+        statusEl.textContent = 'Chargement…';
+
+        try {
+            const resp = await fetch('/cuteweb/api/retrieve/main_table/{{ project_id }}');
+            if (!resp.ok) {
+                statusEl.textContent = `Erreur HTTP ${resp.status}`;
+                return;
+            }
+
+            const json = await resp.json();
+            if (!json.success) {
+                statusEl.textContent = `Erreur : ${json.message}`;
+                return;
+            }
+
+            const data = json.data;        // Vec<HashMap<String,String>>
+            if (!data || data.length === 0) {
+                statusEl.textContent = 'Aucun résultat.';
+                document.getElementById('main-table-head').innerHTML = '<tr></tr>';
+                document.getElementById('main-table-body').innerHTML = '';
+                return;
+            }
+
+            // Reconstruire les en-têtes à partir des clés de la première ligne
+            const columns = Object.keys(data[0]);
+            const headTr = '<tr>' + columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+            document.getElementById('main-table-head').innerHTML = headTr;
+
+            // Reconstruire les lignes
+            const bodyRows = data.map(row => {
+                const cells = columns.map(c => `<td>${row[c] ?? ''}</td>`).join('');
+                return `<tr>${cells}</tr>`;
+            });
+            document.getElementById('main-table-body').innerHTML = bodyRows.join('');
+
+            statusEl.textContent = `${data.length} ligne(s)`;
+
+        } catch (err) {
+            statusEl.textContent = `Erreur réseau : ${err}`;
+        }
+    }
+
+    // Charger les données au premier affichage
+    document.addEventListener('DOMContentLoaded', update_main_table);
+</script>

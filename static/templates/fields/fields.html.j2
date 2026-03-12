@@ -1,0 +1,139 @@
+{#
+fields.html.j2
+---------------
+Widget de sélection des champs (colonnes) à afficher dans main_table.
+L'utilisateur coche/décoche des cases ; chaque changement déclenche :
+1. set_var() → POST /cuteweb/api/setvar (met à jour user_vars["fields"])
+2. update_main_table() → rafraîchit la table sans recharger la page
+
+Contexte Jinja attendu:
+- project_id : int
+- available_fields : liste de noms de champs (chargée dynamiquement au premier affichage)
+- selected_fields : liste des champs actuellement cochés (optionnel)
+#}
+
+<section id="fields-widget">
+
+    <h3 class="widget-title">Champs</h3>
+
+    {# Message d'erreur (caché par défaut) #}
+    <p id="fields-error" class="widget-error" hidden></p>
+
+    {# Liste des cases à cocher — rendue côté serveur si available_fields est fourni,
+    sinon rechargée par JS au DOMContentLoaded #}
+    <form id="fields-form">
+        {% if available_fields is defined %}
+        {% for field in available_fields %}
+        <label class="field-checkbox">
+            <input type="checkbox" name="field" value="{{ field }}" {% if selected_fields is defined and field in
+                selected_fields %}checked{% endif %} onchange="on_field_change()" />
+            {{ field }}
+        </label>
+        {% endfor %}
+        {% else %}
+        <p id="fields-loading">Chargement des champs…</p>
+        {% endif %}
+    </form>
+
+</section>
+
+<script>
+    // ---------------------------------------------------------------------------
+    // set_var(key, value)
+    //
+    // Appelle POST /cuteweb/api/setvar pour persister une variable utilisateur.
+    // Retourne true en cas de succès, false sinon.
+    // ---------------------------------------------------------------------------
+    async function set_var(key, value) {
+        const resp = await fetch('/cuteweb/api/setvar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_id: {{ project_id }},
+            key: key,
+            value: value,
+    }),
+  });
+
+    const json = await resp.json();
+    if (!json.success) {
+        console.error(`set_var(${key}) a échoué :`, json.message);
+        return false;
+    }
+    return true;
+}
+
+    // ---------------------------------------------------------------------------
+    // on_field_change()
+    //
+    // Appelée à chaque cochage/décochage d'un champ.
+    // Sérialise la liste des champs cochés en JSON, l'envoie au backend,
+    // puis demande à main_table de se rafraîchir.
+    // ---------------------------------------------------------------------------
+    async function on_field_change() {
+        const checkboxes = document.querySelectorAll('#fields-form input[name="field"]');
+        const selected = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+
+        const ok = await set_var('fields', JSON.stringify(selected));
+        if (ok) {
+            // Notifier main_table qu'il doit se mettre à jour
+            if (typeof update_main_table === 'function') {
+                update_main_table();
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Initialisation : charger la liste des champs disponibles via l'API,
+    // puis cocher ceux qui sont déjà sélectionnés.
+    // ---------------------------------------------------------------------------
+    async function init_fields_widget() {
+        const resp = await fetch('/cuteweb/api/retrieve/fields/{{ project_id }}');
+        if (!resp.ok) {
+            document.getElementById('fields-error').textContent =
+                `Impossible de charger les champs (HTTP ${resp.status})`;
+            document.getElementById('fields-error').hidden = false;
+            return;
+        }
+
+        const json = await resp.json();
+        if (!json.success) {
+            document.getElementById('fields-error').textContent = json.message;
+            document.getElementById('fields-error').hidden = false;
+            return;
+        }
+
+        const fields = json.data;        // Vec<String>
+        const form = document.getElementById('fields-form');
+        const loading = document.getElementById('fields-loading');
+        if (loading) loading.remove();
+
+        // Récupérer les champs déjà sélectionnés depuis le DOM (si pré-rendu côté serveur)
+        const existing = Array.from(
+            form.querySelectorAll('input[name="field"]:checked')
+        ).map(cb => cb.value);
+
+        fields.forEach(field => {
+            // Éviter les doublons si le template a déjà rendu le champ
+            if (form.querySelector(`input[value="${CSS.escape(field)}"]`)) return;
+
+            const label = document.createElement('label');
+            label.className = 'field-checkbox';
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.name = 'field';
+            cb.value = field;
+            cb.checked = existing.includes(field);
+            cb.addEventListener('change', on_field_change);
+
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(' ' + field));
+            form.appendChild(label);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', init_fields_widget);
+</script>

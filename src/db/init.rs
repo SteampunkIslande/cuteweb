@@ -17,5 +17,20 @@ pub async fn create_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> 
 
 pub async fn init_db_from_url(url: &str) -> Result<SqlitePool, sqlx::Error> {
     let pool = create_pool(url).await?;
+    run_migrations(&pool).await?;
     Ok(pool)
+}
+
+async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS projects (
+            project_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_vars  TEXT NOT NULL DEFAULT '{}'
+        );
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
 }

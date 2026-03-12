@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projet {{ project_id }} — CuteWeb</title>
+
+    <style>
+        /* -----------------------------------------------------------------------
+       Layout 3 colonnes :  [tab-left]  |  [main-table]  |  [tab-right]
+       --------------------------------------------------------------------- */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            font-size: 14px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr 300px;
+            grid-template-rows: 100vh;
+            height: 100vh;
+        }
+
+        .layout-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-right: 1px solid #ddd;
+        }
+
+        .layout-panel:last-child {
+            border-right: none;
+        }
+
+        /* Tab widget ---------------------------------------------------------- */
+        .tab-widget {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .tab-bar {
+            display: flex;
+            flex-shrink: 0;
+            background: #f4f4f4;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .tab-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #0066cc;
+            font-weight: 600;
+        }
+
+        .tab-panel {
+            display: none;
+            flex: 1;
+            overflow: auto;
+            padding: 8px;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Table centrale ------------------------------------------------------ */
+        #main-table-section {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .main-table-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+
+        .table-scroll {
+            flex: 1;
+            overflow: auto;
+        }
+
+        #main-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #main-table th,
+        #main-table td {
+            border: 1px solid #ddd;
+            padding: 4px 8px;
+            white-space: nowrap;
+        }
+
+        #main-table thead th {
+            position: sticky;
+            top: 0;
+            background: #f0f0f0;
+        }
+
+        #main-table tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        /* Message d'erreur ---------------------------------------------------- */
+        .widget-error {
+            color: #cc0000;
+            font-size: 12px;
+            padding: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-layout">
+
+        {# ===== Colonne gauche : onglets (ex: Fields) ===== #}
+        <div class="layout-panel" id="panel-left">
+            {% from "macros/tab_widget.html.j2" import tab_widget %}
+            {{ tab_widget(
+            widget_id = "left-tabs",
+            tabs = [
+            { "name": "Champs", "template": "fields" },
+            { "name": "Filtres", "template": "filters" }
+            ],
+            project_id = project_id
+            ) }}
+        </div>
+
+        {# ===== Colonne centrale : table principale ===== #}
+        <div class="layout-panel" id="panel-center">
+            {% include "main_table/main_table.html.j2" %}
+        </div>
+
+        {# ===== Colonne droite : onglets (ex: Variant info) ===== #}
+        <div class="layout-panel" id="panel-right">
+            {% from "macros/tab_widget.html.j2" import tab_widget %}
+            {{ tab_widget(
+            widget_id = "right-tabs",
+            tabs = [
+            { "name": "Info variant", "template": "variant_info" }
+            ],
+            project_id = project_id
+            ) }}
+        </div>
+
+    </div>
+
+    <script>
+        // ---------------------------------------------------------------------------
+        // cuteweb namespace global
+        // ---------------------------------------------------------------------------
+        const cuteweb = {
+            /**
+             * switchTab(widgetId, index)
+             * Affiche l'onglet `index` (1-based) dans le widget `widgetId`.
+             */
+            switchTab(widgetId, index) {
+                const widget = document.getElementById(widgetId);
+                if (!widget) return;
+
+                widget.querySelectorAll('.tab-btn').forEach((btn, i) => {
+                    btn.classList.toggle('active', i + 1 === index);
+                });
+                widget.querySelectorAll('.tab-panel').forEach((panel, i) => {
+                    panel.classList.toggle('active', i + 1 === index);
+                });
+            },
+        };
+    </script>
+
+</body>
+
+</html>
