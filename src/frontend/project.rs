@@ -6,7 +6,7 @@ use crate::auth::Authenticated;
 
 /// GET /cuteweb/project/<project_id>
 ///
-/// Sert la page principale du projet en rendant `layout/main_layout.html.j2`
+/// Sert la page principale du projet en rendant `layouts/main_layout.html.j2`
 /// via minijinja. Les sous-templates (main_table, fields, macro…) sont inclus
 /// grâce à un loader qui lit dans le répertoire `static/templates`.
 #[get("/project/<project_id>")]
@@ -22,10 +22,11 @@ pub async fn get_project(
 }
 
 /// Construit l'environnement minijinja avec tous les templates du répertoire,
-/// puis rend `layout/main_layout.html.j2` avec le contexte donné.
+/// puis rend `layouts/main_layout.html.j2` avec le contexte donné.
 fn render_layout(project_id: i64, env: &Environment) -> Result<String, minijinja::Error> {
     // Contexte minimal : project_id
     let ctx = serde_json::json!({ "project_id": project_id });
 
-    env.get_template("layout/main_layout.html.j2")?.render(&ctx)
+    env.get_template("layouts/main_layout.html.j2")?
+        .render(&ctx)
 }

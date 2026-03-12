@@ -12,10 +12,10 @@
 
 {% block content %}
 
-<div id="app-layout">
+<div class="app-layout">
 
     {# ===== Colonne gauche : onglets (ex: Fields) ===== #}
-    <div class="layout-panel" id="panel-left">
+    <div class="layout-panel panel-left">
         {% from "macros/tab_widget.html.j2" import tab_widget %}
         {{ tab_widget(
         widget_id = "left-tabs",
@@ -28,12 +28,12 @@
     </div>
 
     {# ===== Colonne centrale : table principale ===== #}
-    <div class="layout-panel" id="panel-center">
+    <div class="layout-panel panel-center">
         {% include "main_table/main_table.html.j2" %}
     </div>
 
     {# ===== Colonne droite : onglets (ex: Variant info) ===== #}
-    <div class="layout-panel" id="panel-right">
+    <div class="layout-panel panel-right">
         {% from "macros/tab_widget.html.j2" import tab_widget %}
         {{ tab_widget(
         widget_id = "right-tabs",
