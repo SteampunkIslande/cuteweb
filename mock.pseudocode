@@ -1,0 +1,84 @@
+La page /cuteweb/project/<project_id> renvoie un fichier layout écrit en HTML et jinja.
+
+Le contexte jinja:
+- project_id: int
+
+La table sqlite qui permet de stocker les infos d'un projet stocke:
+- project_id
+- user_vars (sous la forme d'un JSON)
+
+Chaque module, que l'on peut aussi qualifier de widget HTML, est d'abord défini en Rust.
+On définit son endpoint de mise à jour.
+
+Pour installer un module, il suffit de définir une route:
+Ex: pour la route main_table:
+/cuteweb/api/retrieve/main_table/project_id
+En l'occurrence, dans la définition de main_table.rs, est définie la route:
+#[get("/main_table/project_id")]
+pub async fn main_table_get(){...}
+
+Chaque module a aussi sa définition en HTML+jinja.
+La page du layout global contient des références aux fichiers HTML des modules jinja concernés.
+
+Ainsi, dans la définition de main_table.html.j2:
+<table>
+</table>
+
+<script>
+fn update_main_table()
+{
+    // Un autre module a estimé qu'il avait modifié une variable d'état esssentielle à main_table (ex: l'utilisateur a décoché un des champs du module 'fields')
+    const data = await get_data("/cuteweb/api/retrieve/main_table/{{ project_id }}")
+    // Ainsi, il n'est pas nécessaire de rafraîchir toute la page
+
+    // Rafraîchir la table:
+    ...
+}
+</script>
+
+Chaque module peut faire appel à une fonction, appelée set_var en javascript, et qui appelle un endpoint:
+
+#[post("/setvar", type = "UserVarSetter")]
+fn set_var()
+{
+    // Met à jour les variables utilisateur dans la table projects
+}
+Cette route est montée sur "/cuteweb/api/setvar"
+
+Chaque module doit également définir, dans son template associé, un élément HTML qui est ajouté au layout global.
+
+Le layout global se découpe en trois zones:
+
+Tout à gauche, un tab widget. Au centre, une table. Tout à droite, un autre tab widget.
+
+Chaque zone utilise une directive include pour y insérer le(s) module(s) qui doit y être placé.
+
+Les tab widget utilisent une macro jinja toute faite pour afficher les onglets et gérer dans une seule fonction l'élement 'tab widget' (le contenu d'un tab widget étant un module, et le nom de l'onglet donné par le module)
+
+
+Pour la mise à jour des données de chaque module:
+
+#[get("/main_table/project_id")]
+pub async fn main_table_get() -> Result<ApiResponse>{
+    // Aller chercher, dans project_id, les variables utilisateur qui ont été enregistrées
+
+    let vars: HashMap<String,String> = db::get_project_uservars();
+
+    let query = if !vars.get("uses_left_joins").is_none()
+    {
+        // render peut renvoyer une erreur s'il manque une variable utilisateur.
+        // Dans ce cas, l'erreur renvoyée par render peut être utile pour le frontend, par exemple, ce dernier peut afficher un message de type 'Vous devez définir les échantillons, pour cela <a onclick="define_samples()">cliquez ici</a>'
+        // Dans l'exemple, la fonction define_samples ouvre un dialogue modal pour que l'utilisateur spécifie des échantillons
+        Queries::WithLeftJoins.render(&vars)?
+    }
+    else
+    {
+        Queries::Default.render(&vars)?
+    };
+
+    Ok(duckdb::run_query(query).to_api_response())
+
+}
+
+run_query doit renvoyer une table duckdb (un itérateur où chaque élément correspond à une ligne).
+
