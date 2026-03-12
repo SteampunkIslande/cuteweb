@@ -1,10 +1,20 @@
+use minijinja::{Environment, context};
+use rocket::response::content::RawHtml;
 use rocket::{State, get};
-use sqlx::SqlitePool;
 
-use crate::auth::Authenticated;
+#[get("/login")]
+pub async fn login_get(env: &State<Environment<'static>>) -> RawHtml<String> {
+    let ctx = context! { error => None::<String> };
 
-#[get("/cuteweb/login")]
-pub async fn login(auth: Authenticated, pool: &State<SqlitePool>) -> String {
-    // Afficher une page de login à partir d'un template
-    "".to_string()
+    let template = if let Ok(template) = env.get_template("login.html.j2") {
+        template
+    } else {
+        return RawHtml("Impossible de charger le template login.html.j2".to_string());
+    };
+
+    RawHtml(
+        template
+            .render(ctx)
+            .unwrap_or_else(|_| "Template error".to_string()),
+    )
 }

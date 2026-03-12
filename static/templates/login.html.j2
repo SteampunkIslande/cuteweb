@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Login</title>
+</head>
+
+<body>
+    <h1>Se connecter</h1>
+
+    {% if error %}
+    <div style="color: red;">{{ error }}</div>
+    {% endif %}
+
+    <div id="login-form">
+        <label for="usermail">Nom d'utilisateur</label>
+        <input id="usermail" name="usermail" type="text" />
+        <br />
+        <label for="password">Mot de passe</label>
+        <input id="password" name="password" type="password" />
+        <br />
+        <button onclick="login()">Se connecter</button>
+    </div>
+    <script>
+        async function login() {
+            const usermail = document.getElementById('usermail').value;
+            const password = document.getElementById('password').value;
+
+            if (!usermail.trim() || !password.trim()) {
+                alert('Les deux champs sont requis');
+                return;
+            }
+
+            const response = await fetch('/cuteweb/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usermail, password })
+            });
+
+            if (response.ok) {
+                window.location.href = '/cuteweb/projects';
+            } else {
+                const errorData = await response.json();
+                alert(errorData.error || 'Erreur de connexion');
+            }
+
+        }
+    </script>
+</body>
+
+</html>

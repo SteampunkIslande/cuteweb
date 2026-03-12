@@ -8,7 +8,7 @@ pub async fn get_project_uservars(
     project_id: i64,
     pool: &SqlitePool,
 ) -> Result<HashMap<String, String>, anyhow::Error> {
-    let row = sqlx::query("SELECT user_vars FROM projects WHERE project_id = ?")
+    let row = sqlx::query("SELECT user_vars FROM Projects WHERE project_id = ?")
         .bind(project_id)
         .fetch_optional(pool)
         .await?;
@@ -33,7 +33,7 @@ pub async fn set_project_uservar(
 ) -> Result<(), anyhow::Error> {
     // Upsert : on crée la ligne si elle n'existe pas encore
     sqlx::query(
-        "INSERT INTO projects (project_id, user_vars) VALUES (?, '{}')
+        "INSERT INTO Projects (project_id, user_vars) VALUES (?, '{}')
          ON CONFLICT(project_id) DO NOTHING",
     )
     .bind(project_id)
@@ -41,7 +41,7 @@ pub async fn set_project_uservar(
     .await?;
 
     // Lire le JSON courant
-    let row = sqlx::query("SELECT user_vars FROM projects WHERE project_id = ?")
+    let row = sqlx::query("SELECT user_vars FROM Projects WHERE project_id = ?")
         .bind(project_id)
         .fetch_one(pool)
         .await?;
@@ -52,7 +52,7 @@ pub async fn set_project_uservar(
 
     let new_json = serde_json::to_string(&map)?;
 
-    sqlx::query("UPDATE projects SET user_vars = ? WHERE project_id = ?")
+    sqlx::query("UPDATE Projects SET user_vars = ? WHERE project_id = ?")
         .bind(new_json)
         .bind(project_id)
         .execute(pool)

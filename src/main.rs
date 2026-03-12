@@ -42,7 +42,10 @@ async fn rocket() -> _ {
 
     rocket::build()
         // Pages HTML
-        .mount("/cuteweb", routes![frontend::get_project])
+        .mount(
+            "/cuteweb",
+            routes![frontend::get_project, frontend::login_get],
+        )
         // Fichiers statiques
         .mount("/cuteweb/static", static_routes)
         // API : authentification

@@ -24,7 +24,7 @@ pub async fn init_db_from_url(url: &str) -> Result<SqlitePool, sqlx::Error> {
 async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS projects (
+        CREATE TABLE IF NOT EXISTS Projects (
             project_id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_vars  TEXT NOT NULL DEFAULT '{}'
         );
@@ -32,5 +32,22 @@ async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS Users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usermail TEXT NOT NULL UNIQUE,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            last_login TEXT,
+            is_admin INTEGER NOT NULL DEFAULT 0
+        );
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }
