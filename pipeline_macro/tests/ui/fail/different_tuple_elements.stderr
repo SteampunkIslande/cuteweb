@@ -1,0 +1,5 @@
+error: in-place step: both tuple elements must be the same expression, e.g. `(out, out)`
+  --> tests/ui/fail/different_tuple_elements.rs:18:14
+   |
+18 |         step((&a, &b))
+   |              ^^^^^^^^

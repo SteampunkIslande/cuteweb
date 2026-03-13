@@ -1,0 +1,5 @@
+error: in-place step: first argument must be a 2-element tuple `(path, path)`
+  --> tests/ui/fail/tuple_wrong_arity.rs:15:20
+   |
+15 |     pipeline!(step((&a, &a, &a)))?;
+   |                    ^^^^^^^^^^^^

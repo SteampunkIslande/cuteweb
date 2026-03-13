@@ -1,0 +1,62 @@
+J'aimerais une macro pour appeler les fonctions rust suivantes:
+
+fn step1(input_parquet: Path, output_parquet: Path)->Result<(),PipelineError>{Ok(())}
+fn step2(input_parquet: Path, output_parquet: Path)->Result<(),PipelineError>{Ok(())}
+fn step3(input_parquet: Path, output_parquet: Path, optionA: u64)->Result<(),PipelineError>{Ok(())}
+fn step4(input_parquet: Path, output_parquet: Path, optionA: &str, optionB: i32)->Result<(),PipelineError>{Ok(())}
+
+let pipeline_input = "raw/RUN1.parquet";
+let pipeline_output = "results/RUN1.parquet"
+
+pipeline!(
+    step1(pipeline_input,pipeline_output),
+    step2((pipeline_output,pipeline_output)),
+    step3((pipeline_output,pipeline_output),42),
+    step4((pipeline_output,pipeline_output),"hello world",15)
+)?;
+
+
+Code généré par la macro:
+
+{
+
+    step1(pipeline_input,pipeline_output)?;
+
+    let step2_output = pipeline_output.with_extension(".parquet",".1.parquet")
+    if let Err(e) = step2(pipeline_output,step2_output)
+    {
+        step2_output.unlink();
+        return Err(e);
+    }
+    else
+    {
+        step2_output.rename(pipeline_output)
+    }
+
+    let step3_output = pipeline_output.with_extension(".parquet",".2.parquet")
+    if let Err(e) = step3(pipeline_output,step3_output,42)
+    {
+        step3_output.unlink();
+        return Err(e);
+    }
+    else
+    {
+        step3_output.rename(pipeline_output)
+    }
+
+    let step4_output = pipeline_output.with_extension(".parquet",".3.parquet")
+    if let Err(e) = step3(pipeline_output,step4_output,"hello world",15)
+    {
+        step4_output.unlink();
+        return Err(e);
+    }
+    else
+    {
+        step4_output.rename(pipeline_output)
+    }
+
+    Ok(())
+
+}
+
+Remarque bien qu'il faut que les deux identifiers dans le premier tuple passé en argument à la fonction soient identiques.
