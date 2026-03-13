@@ -14,17 +14,17 @@ use std::env;
 async fn rocket() -> _ {
     static PROJECT_DIR: Dir = include_dir!("static");
 
+    // Permet de servir les routes statiques.
     let static_routes: Vec<Route> = match env::var("STATIC_DIR").ok() {
         Some(p) => FileServer::from(p).into(),
         None => StaticFiles::from(&PROJECT_DIR).into(),
     };
+    /// Répertoire statique embarqué dans le binaire.
+    static TEMPLATES_DIR: Dir = include_dir!("static/templates");
 
     let pool = db::init_db()
         .await
         .expect("Impossible d'initialiser la base de données");
-
-    /// Répertoire statique embarqué dans le binaire (templates uniquement).
-    static TEMPLATES_DIR: Dir = include_dir!("static/templates");
 
     let mut environment: Environment = Environment::new();
     environment.set_loader(|name| {
