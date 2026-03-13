@@ -135,7 +135,6 @@ fn codegen_step(step: &PipelineStep) -> proc_macro2::TokenStream {
             idx,
         } => {
             let tmp_ident = Ident::new(&format!("__pipeline_tmp_{}", idx), Span::call_site());
-            let tmp_ext = format!(".{}.parquet", idx);
 
             quote! {
                 let #tmp_ident = {
@@ -144,8 +143,12 @@ fn codegen_step(step: &PipelineStep) -> proc_macro2::TokenStream {
                         .file_stem()
                         .unwrap_or_default()
                         .to_string_lossy();
+                    let __extension = __p
+                        .extension()
+                        .unwrap_or_default()
+                        .to_string_lossy();
                     let __parent = __p.parent().unwrap_or_else(|| ::std::path::Path::new("."));
-                    __parent.join(format!("{}{}", __stem, #tmp_ext))
+                    __parent.join(format!("{}.{}.{}", __stem, #idx, __extension))
                 };
 
                 match #func(#path, &#tmp_ident #(, #extra)*) {
