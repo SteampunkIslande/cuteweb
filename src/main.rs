@@ -81,16 +81,13 @@ async fn rocket() -> rocket::Rocket<rocket::Build> {
         )
         // Fichiers statiques
         .mount("/cuteweb/static", static_routes)
-        // API : authentification
+        // API : authentification et mise à jour des variables utilisateur
         .mount(
             "/cuteweb/api",
             routes![backend::login_post, backend::setvar_post,],
         )
         // API : récupération des données des modules
-        .mount(
-            "/cuteweb/api/retrieve",
-            routes![modules::main_table_get, modules::fields_get,],
-        )
+        .mount("/cuteweb/api/retrieve", modules::modules_routes())
         .manage(pool)
         .manage(environment)
 }
