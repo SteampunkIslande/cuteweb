@@ -34,7 +34,7 @@ impl<'r> Responder<'r, 'static> for AuthError {
         let body = match self {
             AuthError::InvalidCredentials => {
                 response.status(Status::Unauthorized);
-                ApiResponse::<u8>::error("Mote de passe invalide".to_string())
+                ApiResponse::<u8>::error("Mot de passe invalide".to_string())
             }
             AuthError::DatabaseError(e) => {
                 response.status(Status::InternalServerError);

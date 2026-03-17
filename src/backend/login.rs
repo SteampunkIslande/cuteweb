@@ -21,6 +21,9 @@ pub async fn login_post(
     cookies: &CookieJar<'_>,
     pool: &State<SqlitePool>,
 ) -> Result<Redirect, AuthError> {
+    if login.password.is_empty() {
+        return Err(AuthError::NoPassword);
+    }
     let mut user = User::find_by_usermail(&login.usermail, pool)
         .await?
         .ok_or(AuthError::UnknownUser)?;
