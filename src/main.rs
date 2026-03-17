@@ -11,10 +11,7 @@ mod modules;
 use std::io::Write;
 use std::{env, path::Path};
 
-#[launch]
-async fn rocket() -> _ {
-    static PROJECT_DIR: Dir = include_dir!("static");
-
+fn ensure_rocket_file() {
     let rocket_config_file = env::current_dir()
         .expect("Cannot determine our own working directory")
         .join(Path::new("Rocket.toml"));
@@ -28,7 +25,10 @@ async fn rocket() -> _ {
             .create_new(true)
             .write(true)
             .open(&rocket_config_file)
-            .expect("Cannot create");
+            .expect(&format!(
+                "Cannot create {}",
+                rocket_config_file.to_string_lossy()
+            ));
         config_file
             .write_all(include_bytes!("../assets/Rocket.toml"))
             .expect(&format!(
@@ -36,21 +36,27 @@ async fn rocket() -> _ {
                 rocket_config_file.to_string_lossy()
             ));
     }
+}
+
+#[launch]
+async fn rocket() -> rocket::Rocket<rocket::Build> {
+    /// Répertoire statique embarqué dans le binaire.
+    static PROJECT_DIR: Dir = include_dir!("static");
+
+    ensure_rocket_file();
 
     // Permet de servir les routes statiques.
     let static_routes: Vec<Route> = match env::var("STATIC_DIR").ok() {
         Some(p) => FileServer::from(p).into(),
         None => StaticFiles::from(&PROJECT_DIR).into(),
     };
+
     /// Répertoire statique embarqué dans le binaire.
     static TEMPLATES_DIR: Dir = include_dir!("static/templates");
 
-    let pool = db::init_db()
-        .await
-        .expect("Impossible d'initialiser la base de données");
-
+    // Initialisation de l'environnement (trop pénible à déplacer dans une fonction séparée, merci le borrow checker...)
     let mut environment: Environment = Environment::new();
-    environment.set_loader(|name| {
+    environment.set_loader(move |name| {
         if let Some(file) = TEMPLATES_DIR.get_file(name) {
             if let Some(content) = file.contents_utf8() {
                 eprintln!("Invoked with {}", name);
@@ -62,6 +68,10 @@ async fn rocket() -> _ {
             Ok(None)
         }
     });
+
+    let pool = db::init_db()
+        .await
+        .expect("Impossible d'initialiser la base de données");
 
     rocket::build()
         // Pages HTML
