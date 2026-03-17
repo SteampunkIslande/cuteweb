@@ -1,4 +1,0 @@
-[default]
-db = "sqlite://cuteweb.sqlite3"
-
-port = 8000

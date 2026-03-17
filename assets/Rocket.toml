@@ -2,3 +2,6 @@
 db = "sqlite://cuteweb.sqlite3"
 
 port = 8000
+
+local = true
+secret_key = "sTooPaHkmo2i/cXXwawBf4per11UBB1x7nRJvUxPfFg="

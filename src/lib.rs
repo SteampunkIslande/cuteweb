@@ -1,5 +1,5 @@
-use rocket::config;
-use serde::Deserialize;
+pub mod config;
+pub use config::{CutewebConfig, get_config};
 
 #[derive(Debug, serde::Serialize)]
 pub struct ApiResponse<T> {
@@ -24,15 +24,4 @@ impl<T> ApiResponse<T> {
             data: None,
         }
     }
-}
-
-#[derive(Deserialize)]
-pub struct CutewebConfig {
-    pub db: String,
-}
-
-pub fn get_config() -> CutewebConfig {
-    config::Config::figment()
-        .extract::<CutewebConfig>()
-        .expect("Invalid rocket configuration")
 }

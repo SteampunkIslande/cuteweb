@@ -23,11 +23,11 @@ impl Default for User {
         Self {
             id: Default::default(),
             usermail: Default::default(),
-            username: Default::default(),
-            password_hash: Default::default(),
+            username: whoami::username().unwrap_or("Unknown user".to_string()),
+            password_hash: "".to_string(),
             created_at: OffsetDateTime::now_utc(),
-            last_login: Default::default(),
-            is_admin: Default::default(),
+            last_login: None,
+            is_admin: false,
         }
     }
 }

@@ -28,3 +28,4 @@ duckdb = { version = "1.1.5", features = ["bundled"] }
 rocket-include-dir = "1.1.2"
 include_dir = "0.7.4"
 minijinja = { version = "2.17.1", features = ["loader"] }
+whoami = "2.1.1"
