@@ -8,11 +8,34 @@ mod db;
 mod frontend;
 mod modules;
 
-use std::env;
+use std::io::Write;
+use std::{env, path::Path};
 
 #[launch]
 async fn rocket() -> _ {
     static PROJECT_DIR: Dir = include_dir!("static");
+
+    let rocket_config_file = env::current_dir()
+        .expect("Cannot determine our own working directory")
+        .join(Path::new("Rocket.toml"));
+
+    if !rocket_config_file.exists() {
+        eprintln!(
+            "Could not find Rocket.toml file locally, creating {}",
+            rocket_config_file.to_string_lossy()
+        );
+        let mut config_file = std::fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&rocket_config_file)
+            .expect("Cannot create");
+        config_file
+            .write_all(include_bytes!("../assets/Rocket.toml"))
+            .expect(&format!(
+                "Cannot write to {}",
+                rocket_config_file.to_string_lossy()
+            ));
+    }
 
     // Permet de servir les routes statiques.
     let static_routes: Vec<Route> = match env::var("STATIC_DIR").ok() {
