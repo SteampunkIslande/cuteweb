@@ -33,7 +33,7 @@
             ],
             "queries": [
                 {
-                    "default": "SELECT {{ fields }} FROM ( SELECT * FROM read_parquet('{{ datalake_root }}/{{ runs }}') ) WHERE {{ filters }} LIMIT {{ limit }} OFFSET {{ offset }}"
+                    "default": "SELECT {{ fields }} FROM ( SELECT * FROM read_parquet({{ runs | prefixed_path(\"{{ datalake_root }}\") | duckdb_string_list }}) ) WHERE {{ filters }} LIMIT {{ limit }} OFFSET {{ offset }}"
                 }
             ]
         },
